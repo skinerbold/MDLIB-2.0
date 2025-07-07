@@ -4,6 +4,12 @@ set -o errexit
 
 echo "🚀 Iniciando build do MDLIB 2.0..."
 
+# Instalar Composer se não estiver disponível
+if ! command -v composer &> /dev/null; then
+    echo "📦 Instalando Composer..."
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+fi
+
 # Instalar dependências PHP
 echo "📦 Instalando dependências PHP..."
 composer install --optimize-autoloader --no-dev

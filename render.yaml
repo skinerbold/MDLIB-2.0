@@ -4,6 +4,7 @@ services:
     runtime: php
     plan: free
     buildCommand: |
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
       composer install --optimize-autoloader --no-dev
       php artisan key:generate --show
       php artisan config:cache
