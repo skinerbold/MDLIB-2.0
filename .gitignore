@@ -22,3 +22,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Manter arquivo SQLite vazio para produção
+!database/database.sqlite
+
+# Arquivos de deploy
+!render.yaml
+!build.sh

@@ -107,3 +107,28 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## Autor
 Desenvolvido com ❤️ para tornar o conteúdo mais acessível em Libras.
 
+## Deploy
+
+### Deploy no Render
+
+Este projeto está configurado para deploy automático no [Render](https://render.com). Para fazer o deploy:
+
+1. **Conecte seu repositório GitHub ao Render**
+2. **Selecione "New Web Service"**
+3. **Configure as opções:**
+   - **Build Command:** `./build.sh`
+   - **Start Command:** `php artisan serve --host=0.0.0.0 --port=$PORT`
+   - **Environment:** Production
+
+Ou use o arquivo `render.yaml` incluído para configuração automática.
+
+### Variáveis de Ambiente Necessárias
+
+```bash
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=(gerada automaticamente)
+DB_CONNECTION=sqlite
+DB_DATABASE=/opt/render/project/src/database/database.sqlite
+```
+
