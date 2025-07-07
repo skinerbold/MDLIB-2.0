@@ -116,19 +116,21 @@ Este projeto está configurado para deploy automático no [Render](https://rende
 1. **Conecte seu repositório GitHub ao Render**
 2. **Selecione "New Web Service"**
 3. **Configure as opções:**
-   - **Build Command:** `php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php --install-dir=/usr/local/bin --filename=composer && composer install --no-dev --optimize-autoloader && php artisan config:cache && npm ci && npm run build`
+   - **Build Command:** `composer install --no-dev --optimize-autoloader && npm ci && npm run build`
    - **Start Command:** `php artisan serve --host=0.0.0.0 --port=$PORT`
    - **Pre-Deploy Command:** `php artisan migrate --force`
    - **Environment:** Production
 
-Ou use o arquivo `render.yaml` incluído para configuração automática.
+### Comandos Alternativos (se o acima não funcionar):
+- **Build Command:** `./render-build.sh`
+- **Start Command:** `php artisan serve --host=0.0.0.0 --port=$PORT`
 
 ### Variáveis de Ambiente Necessárias
 
 ```bash
 APP_ENV=production
 APP_DEBUG=false
-APP_KEY=(gerada automaticamente no Render)
+APP_KEY=(clique em Generate no Render)
 DB_CONNECTION=sqlite
 DB_DATABASE=/opt/render/project/src/database/database.sqlite
 LOG_CHANNEL=errorlog

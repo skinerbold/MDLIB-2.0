@@ -3,7 +3,7 @@ services:
     name: mdlib-2-0
     runtime: php
     plan: free
-    buildCommand: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && php composer-setup.php --install-dir=/usr/local/bin --filename=composer && composer install --no-dev --optimize-autoloader && php artisan config:cache && npm ci && npm run build
+    buildCommand: composer install --no-dev --optimize-autoloader && npm ci && npm run build
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     healthCheckPath: /
     envVars:
