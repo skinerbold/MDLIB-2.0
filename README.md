@@ -29,8 +29,8 @@ MDLIB 2.0 é uma aplicação web desenvolvida em Laravel para transformar conte�
 
 ### 1. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/mdlib-2.0.git
-cd mdlib-2.0
+git clone https://github.com/skinerbold/MDLIB-2.0.git
+cd MDLIB-2.0
 ```
 
 ### 2. Instale as dependências do PHP
