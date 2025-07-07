@@ -45,4 +45,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Get the user's file documents.
+     */
+    public function fileDocuments()
+    {
+        return $this->hasMany(FileDocument::class);
+    }
 }
