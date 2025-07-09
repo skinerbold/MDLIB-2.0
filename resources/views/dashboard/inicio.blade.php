@@ -58,7 +58,7 @@
                 <!-- PDF Original Section -->
                 <div class="col-md-4">
                     <div class="main-box">
-                        <h3 class="box-title">PDF<br>ORIGINAL</h3>
+                        <h3 class="box-title">PDF ORIGINAL</h3>
                         <div class="expand-icon">
                             <i class="fas fa-expand-arrows-alt"></i>
                         </div>
@@ -91,7 +91,7 @@
                         </div>
                         <div class="box-content">
                             <div class="viewer-area">
-                                <textarea id="glosa-textarea" class="form-control h-100" placeholder="Digite o glossário aqui..." style="border: none; resize: none; background: transparent; outline: none;"></textarea>
+                                <textarea id="glosa-textarea" class="form-control h-100" placeholder="Digite o glossário..." style="border: none; resize: none; background: transparent; outline: none;"></textarea>
                             </div>
                         </div>
                         
@@ -119,11 +119,8 @@
                         </div>
                         <div class="box-content">
                             <div class="viewer-area">
-                                <!-- Avatar Section -->
-                                <div class="mini-section">
-                                    <h6>AVATAR</h6>
-                                    <small class="text-muted">Área do avatar</small>
-                                </div>
+                                <i class="fas fa-user-circle fa-4x text-muted"></i>
+                                <p class="mt-3 text-muted">Área do Avatar</p>
                             </div>
                         </div>
                         
@@ -146,41 +143,27 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>NOME DO ARQUIVO</th>
-                            <th>TIPO</th>
-                            <th>GLOSA</th>
-                            <th>TRADUÇÃO</th>
-                            <th>USUÁRIO</th>
-                            <th>DATA DO REGISTRO</th>
-                            <th>DATA DA ATUALIZAÇÃO</th>
-                            <th>EXCLUIR</th>
-                            <th>BAIXAR</th>
+                            <th>Arquivo</th>
+                            <th>Tipo</th>
+                            <th>Glossário</th>
+                            <th>Usuário</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>1</td>
-                            <td>documento_exemplo.pdf</td>
+                            <td>exemplo.pdf</td>
                             <td>PDF</td>
                             <td>Não</td>
-                            <td>Não</td>
-                            <td>Usuário Demo</td>
-                            <td>07/07/2025 14:30</td>
-                            <td>07/07/2025 14:30</td>
+                            <td>Pedro M.</td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="alert('Arquivo excluído (demo)')">
+                                <button type="button" class="btn btn-sm btn-danger me-1" title="Excluir arquivo">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-primary" onclick="alert('Download iniciado (demo)')">
+                                <button type="button" class="btn btn-sm btn-primary" title="Baixar arquivo">
                                     <i class="fas fa-download"></i>
                                 </button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="10" class="text-center text-muted">
-                                <em>Esta é uma demonstração. Em breve você poderá gerenciar arquivos reais.</em>
                             </td>
                         </tr>
                     </tbody>
@@ -201,24 +184,165 @@
     // Função para lidar com upload de arquivo
     function handleFileUpload(input) {
         const file = input.files[0];
-        if (file && file.type === 'application/pdf') {
-            const pdfViewer = document.getElementById('pdf-viewer');
-            pdfViewer.innerHTML = `
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+            alert('Por favor, selecione apenas arquivos PDF.');
+            return;
+        }
+
+        console.log('Iniciando upload:', file.name);
+
+        // Mostrar indicador de carregamento
+        const pdfViewer = document.getElementById('pdf-viewer');
+        pdfViewer.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="mt-2">Processando PDF...</p>
+                <small class="text-muted">Extraindo texto do arquivo</small>
+            </div>
+        `;
+
+        // Verificar se o token CSRF existe
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) {
+            console.error('Token CSRF não encontrado');
+            showUploadError('Erro de segurança: Token CSRF não encontrado');
+            return;
+        }
+
+        // Preparar dados para upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', csrfToken.getAttribute('content'));
+
+        console.log('Fazendo upload para:', '/files/upload'); // Upload real
+        console.log('Token CSRF:', csrfToken.getAttribute('content'));
+
+        // Fazer upload
+        fetch('/files/upload', { // Usando rota real de upload
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('Resposta recebida:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Dados recebidos:', data);
+            if (data.success) {
+                // Atualizar visualização do PDF
+                updatePdfViewer(data);
+                
+                // Atualizar glossário se texto foi extraído
+                if (data.extraction.success) {
+                    updateGlossary(data.extraction.text);
+                    showExtractionSuccess(data);
+                } else {
+                    showExtractionError(data);
+                }
+            } else {
+                showUploadError(data.message || 'Erro desconhecido no servidor');
+            }
+        })
+        .catch(error => {
+            console.error('Erro detalhado:', error);
+            showUploadError(`Erro de conexão: ${error.message}`);
+        });
+    }
+
+    // Atualizar visualização do PDF
+    function updatePdfViewer(data) {
+        const pdfViewer = document.getElementById('pdf-viewer');
+        pdfViewer.innerHTML = `
+            <div class="text-center">
                 <i class="fas fa-file-pdf fa-4x text-success"></i>
-                <p class="mt-3 text-success">${file.name}</p>
+                <p class="mt-3 text-success"><strong>${data.filename}</strong></p>
                 <small class="text-muted">Arquivo carregado com sucesso!</small>
-            `;
+            </div>
+        `;
+    }
+
+    // Atualizar glossário com texto extraído
+    function updateGlossary(extractedText) {
+        const textarea = document.getElementById('glosa-textarea');
+        if (textarea && extractedText) {
+            textarea.value = extractedText;
+            textarea.style.background = '#f0fff0'; // Fundo verde claro para indicar sucesso
             
-            // Simulação de processamento
+            // Remover destaque após 3 segundos
             setTimeout(() => {
-                alert('PDF carregado: ' + file.name + '\n\nFuncionalidade de visualização será implementada em breve.');
-            }, 500);
-        } else {
-            alert('Por favor, selecione um arquivo PDF válido.');
+                textarea.style.background = 'transparent';
+            }, 3000);
         }
     }
 
-    // Funções da Glosa
+    // Mostrar sucesso na extração
+    function showExtractionSuccess(data) {
+        const message = `
+            ✅ Texto extraído com sucesso!
+            
+            📄 Arquivo: ${data.filename}
+            📝 Palavras: ${data.word_count || 'N/A'}
+            📊 Caracteres: ${data.char_count || 'N/A'}
+            
+            O texto foi automaticamente adicionado ao Glossário.
+        `;
+        
+        // setTimeout(() => alert(message), 500); // Popup removido - notificação desabilitada
+    }
+
+    // Mostrar erro na extração
+    function showExtractionError(data) {
+        let message = `
+            ⚠️ Upload realizado, mas houve problema na extração de texto:
+            
+            📄 Arquivo: ${data.filename}
+            ❌ Erro: ${data.extraction_message}
+        `;
+
+        if (data.extraction_status === 'failed') {
+            message += `
+            
+            💡 Possíveis soluções:
+            • Verificar se o PDF não está protegido
+            • Tentar com um PDF que contenha texto selecionável
+            • Considerar usar OCR para PDFs digitalizados
+            `;
+        }
+        
+        // setTimeout(() => alert(message), 500); // Popup removido - notificação desabilitada
+    }
+
+    // Mostrar erro no upload
+    function showUploadError(message) {
+        const pdfViewer = document.getElementById('pdf-viewer');
+        pdfViewer.innerHTML = `
+            <div class="text-center text-danger">
+                <i class="fas fa-exclamation-triangle fa-4x"></i>
+                <p class="mt-3">Erro no upload</p>
+                <small>${message}</small>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            pdfViewer.innerHTML = `
+                <i class="fas fa-file-pdf fa-4x"></i>
+                <p class="mt-3">Selecione um arquivo PDF</p>
+            `;
+        }, 5000);
+    }
+
+    // Funções do Glossário
     function editGlosa() {
         const textarea = document.getElementById('glosa-textarea');
         textarea.disabled = false;
@@ -231,9 +355,9 @@
         const content = textarea.value.trim();
         
         if (content) {
-            alert('Glosa salva com sucesso!\n\nConteúdo: ' + content.substring(0, 50) + (content.length > 50 ? '...' : ''));
+            alert('Glossário salvo com sucesso!\n\nConteúdo: ' + content.substring(0, 50) + (content.length > 50 ? '...' : ''));
         } else {
-            alert('Digite algum conteúdo na glosa antes de salvar.');
+            alert('Digite algum conteúdo no glossário antes de salvar.');
         }
     }
 
@@ -245,7 +369,7 @@
             // Simulação de tradução
             alert('Iniciando tradução...\n\nFuncionalidade de tradução será implementada em breve.');
         } else {
-            alert('Digite algum conteúdo na glosa antes de traduzir.');
+            alert('Digite algum conteúdo no glossário antes de traduzir.');
         }
     }
 
