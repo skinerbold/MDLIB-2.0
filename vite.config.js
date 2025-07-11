@@ -7,8 +7,15 @@ export default defineConfig({
             input: [
                 'resources/sass/app.scss',
                 'resources/js/app.js',
+                'resources/js/avatar.js', // Adicionado o novo ponto de entrada
             ],
             refresh: true,
         }),
     ],
+    publicDir: 'public',
+    build: {
+        rollupOptions: {
+            external: [],
+        },
+    },
 });

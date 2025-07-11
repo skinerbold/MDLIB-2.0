@@ -61,74 +61,58 @@ class PdfTextExtractorService
                 Log::warning("Python script not found at: " . $scriptPath);
                 return null;
             }
+
+            // **CORREÇÃO 1: Definir o locale para UTF-8 antes de executar o comando**
+            // Isso garante que o shell e o PHP se comuniquem corretamente em UTF-8.
+            $currentLocale = setlocale(LC_CTYPE, 0);
+            setlocale(LC_CTYPE, 'en_US.UTF-8', 'C.UTF-8');
             
             // Executar o script Python
             $command = sprintf('python "%s" "%s" --json', $scriptPath, $filePath);
             Log::info("Executing command: " . $command);
             
-            $output = null;
-            $return_var = null;
-            
-            // Use shell_exec instead of exec to handle UTF-8 output better
+            // Usar shell_exec para melhor captura de saída. O 2>&1 redireciona erros para a saída padrão.
             $rawOutput = shell_exec($command . ' 2>&1');
-            $return_var = 0; // Assume success if we get output
+
+            // **CORREÇÃO 2: Restaurar o locale original**
+            setlocale(LC_CTYPE, $currentLocale);
             
             if ($rawOutput === null) {
-                // Fallback to exec if shell_exec fails
-                exec($command . ' 2>&1', $output, $return_var);
-                $rawOutput = implode("\n", $output);
+                Log::error("shell_exec failed or returned null. Check if it's disabled in php.ini.");
+                return null;
             }
             
-            Log::info("Command return code: " . $return_var);
-            
-            if (!empty($rawOutput)) {
-                // Ensure proper UTF-8 handling
-                $jsonOutput = $rawOutput;
-                
-                // Check if the output is valid UTF-8
-                if (!mb_check_encoding($jsonOutput, 'UTF-8')) {
-                    // Try different encodings
-                    $encodings = ['Windows-1252', 'ISO-8859-1', 'CP1252'];
-                    foreach ($encodings as $encoding) {
-                        $converted = mb_convert_encoding($jsonOutput, 'UTF-8', $encoding);
-                        if (mb_check_encoding($converted, 'UTF-8')) {
-                            $jsonOutput = $converted;
-                            break;
-                        }
-                    }
-                }
-                
-                Log::info("Raw JSON output length: " . strlen($jsonOutput));
-                
-                $result = json_decode($jsonOutput, true);
-                $jsonError = json_last_error();
-                
-                if ($jsonError !== JSON_ERROR_NONE) {
-                    Log::error("JSON decode error: " . $jsonError . " - " . json_last_error_msg());
-                    Log::error("First 200 chars of JSON: " . substr($jsonOutput, 0, 200));
-                } else {
-                    Log::info("JSON parsed successfully");
-                }
-                
-                if ($result && isset($result['success']) && $result['success'] === true) {
-                    $text = $result['text'];
-                    if (!empty(trim($text))) {
-                        Log::info("Success with Python extraction using " . $result['method'] . ", extracted " . strlen($text) . " characters");
-                        // Don't apply cleanText here since the Python script already handles encoding
-                        return $text;
-                    }
-                } else {
-                    Log::error("Extraction failed or invalid result structure");
-                }
-            } else {
-                Log::warning("Python script failed with return code: " . $return_var);
-                Log::warning("Output: " . implode("\n", $output));
+            Log::info("Raw output received from Python script.");
+
+            // **CORREÇÃO 3: Remover a lógica de adivinhação de encoding**
+            // Agora confiamos que a saída é UTF-8. Apenas validamos se é um JSON válido.
+            $jsonOutput = $rawOutput;
+            $data = json_decode($jsonOutput, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error("Failed to decode JSON from Python script.", [
+                    'json_error' => json_last_error_msg(),
+                    'raw_output' => substr($rawOutput, 0, 500) // Log dos primeiros 500 caracteres
+                ]);
+                return null;
             }
+
+            if (isset($data['error'])) {
+                Log::error("Python script returned an error.", ['error' => $data['error']]);
+                return null;
+            }
+
+            if (isset($data['text'])) {
+                Log::info("Successfully extracted text using Python.");
+                return $data['text'];
+            }
+
+            return null;
+
         } catch (\Exception $e) {
-            Log::error("Python extraction failed: " . $e->getMessage());
+            Log::error("Exception in tryPythonExtraction: " . $e->getMessage());
+            return null;
         }
-        
-        return null;
     }
 
     private function tryPdfToText($filePath)

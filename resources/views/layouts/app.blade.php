@@ -4,13 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- URL do Avatar (para o JavaScript) -->
+    <meta name="avatar-url" content="{{ asset('models/avatar_ana.glb') }}">
 
-    <title>MDLIB 2.0</title>
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -112,7 +110,7 @@
             border: 3px solid #f59e0b;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            height: 450px;
+            height: 520px;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -508,6 +506,57 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
+        /* Avatar 3D Styles */
+        .avatar-3d-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .avatar-3d-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .loading-avatar {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+        }
+
+        .loading-avatar .spinner-border {
+            width: 2rem;
+            height: 2rem;
+            border-width: 3px;
+        }
+
+        .loading-avatar p {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .avatar-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fbb6ce;
+        }
+
+        .avatar-error i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
         /* Responsividade para mobile */
         @media (max-width: 768px) {
             .main-boxes-row {
@@ -573,13 +622,13 @@
         </nav>
 
         <!-- Main Content -->
-        <main>
+        <main class="py-4">
             @yield('content')
         </main>
     </div>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts -->
+    @vite(['resources/js/app.js', 'resources/js/avatar.js'])
     @yield('scripts')
 </body>
 </html>

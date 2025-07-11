@@ -5,6 +5,18 @@
 
     RewriteEngine On
 
+    # Servir arquivos estáticos diretamente (GLB, modelos 3D, etc.)
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteCond %{REQUEST_URI} \.(glb|gltf|bin|fbx|obj|3ds)$ [NC]
+    RewriteRule ^ - [L]
+
+    # CORS para arquivos 3D
+    <FilesMatch "\.(glb|gltf|bin)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type"
+    </FilesMatch>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

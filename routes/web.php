@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\AvatarController;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -19,6 +20,11 @@ Route::get('/auditoria', [DashboardController::class, 'auditoria'])->name('audit
 Route::get('/equipe', [DashboardController::class, 'equipe'])->name('equipe');
 Route::get('/painel-adm', [DashboardController::class, 'painelAdm'])->name('painel-adm');
 Route::get('/meus-dados', [DashboardController::class, 'meusDados'])->name('meus-dados');
+
+// Rotas para o Avatar
+Route::get('/avatar', [AvatarController::class, 'show'])->name('avatar.show');
+Route::post('/avatar/animate', [AvatarController::class, 'animate'])->name('avatar.animate');
+Route::post('/avatar/stop', [AvatarController::class, 'stop'])->name('avatar.stop');
 
 // Rotas para arquivos 
 Route::post('/files/upload', [FileController::class, 'upload'])->name('files.upload');

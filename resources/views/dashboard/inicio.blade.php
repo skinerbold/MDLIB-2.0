@@ -112,25 +112,27 @@
 
                 <!-- Avatar Section -->
                 <div class="col-md-4">
-                    <div class="main-box">
+                    <div class="main-box avatar-box">
                         <h3 class="box-title">AVATAR</h3>
-                        <div class="expand-icon">
+                        <div class="expand-icon" onclick="window.open('/avatar', '_blank')">
                             <i class="fas fa-expand-arrows-alt"></i>
                         </div>
                         <div class="box-content">
-                            <div class="viewer-area">
-                                <i class="fas fa-user-circle fa-4x text-muted"></i>
-                                <p class="mt-3 text-muted">Área do Avatar</p>
+                            <div class="viewer-area" id="scene-container" style="position: relative;">
+                                {{-- O JavaScript do avatar irá renderizar a cena 3D aqui --}}
                             </div>
                         </div>
                         
                         <!-- Botões do Avatar -->
                         <div class="box-buttons">
-                            <button class="btn btn-custom" onclick="cancelOperation()">
-                                <i class="fas fa-times me-1"></i>Cancelar
+                            <button class="btn btn-custom" onclick="playAnimation('talk')">
+                                <i class="fas fa-comment me-1"></i>Falar
                             </button>
-                            <button class="btn btn-custom" onclick="downloadData()">
-                                <i class="fas fa-download me-1"></i>Baixar
+                            <button class="btn btn-custom" onclick="playAnimation('wave')">
+                                <i class="fas fa-hand-paper me-1"></i>Acenar
+                            </button>
+                            <button class="btn btn-custom" onclick="resetAvatar()">
+                                <i class="fas fa-redo me-1"></i>Reset
                             </button>
                         </div>
                     </div>
@@ -179,7 +181,47 @@
     // Funcionalidades interativas
     document.addEventListener('DOMContentLoaded', function() {
         console.log('MDLIB 2.0 Dashboard carregado!');
+        
+        // Adicionar animação de bounce ao CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+                40% { transform: translateY(-10px); }
+                60% { transform: translateY(-5px); }
+            }
+        `;
+        document.head.appendChild(style);
     });
+
+    // Avatar simples para preview
+    let avatarPreviewActive = false;
+    
+    function toggleAvatarPreview() {
+        const container = document.getElementById('avatar-container');
+        if (!container) return;
+        
+        avatarPreviewActive = !avatarPreviewActive;
+        
+        if (avatarPreviewActive) {
+            container.innerHTML = `
+                <div class="avatar-preview-active" style="text-align: center;">
+                    <div class="avatar-icon" style="animation: bounce 2s infinite;">
+                        <i class="fas fa-robot fa-3x text-primary"></i>
+                    </div>
+                    <p class="mt-2 text-primary"><strong>Ana - Avatar ativo</strong></p>
+                    <small class="text-muted">Clique em "Abrir Avatar" para ver em 3D</small>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="avatar-preview">
+                    <i class="fas fa-user-circle fa-4x text-muted"></i>
+                    <p class="mt-3 text-muted">Clique para ver o Avatar 3D</p>
+                </div>
+            `;
+        }
+    }
 
     // Função para lidar com upload de arquivo
     function handleFileUpload(input) {
@@ -404,5 +446,115 @@
             alert('Funcionalidade de expansão será implementada em breve!');
         });
     });
+
+    // Funções do Avatar 3D
+    function playAvatarAnimation(animationName) {
+        if (avatarRenderer) {
+            avatarRenderer.playAnimation(animationName);
+            console.log('Reproduzindo animação:', animationName);
+        } else {
+            console.warn('Avatar não inicializado');
+        }
+    }
+
+    function stopAvatarAnimation() {
+        if (avatarRenderer) {
+            avatarRenderer.stopAnimation();
+            console.log('Animação parada');
+        } else {
+            console.warn('Avatar não inicializado');
+        }
+    }
+
+    function resetAvatarPosition() {
+        if (avatarRenderer) {
+            avatarRenderer.resetPosition();
+            console.log('Posição do avatar resetada');
+        } else {
+            console.warn('Avatar não inicializado');
+        }
+    }
 </script>
+
+{{-- Estilos específicos para o avatar no box --}}
+<style>
+    #scene-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    #scene-container canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+        border-radius: 8px;
+    }
+
+    .status-info {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+        z-index: 10;
+    }
+
+    .loading-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #666;
+        font-size: 12px;
+    }
+
+    .loading-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* CSS específico para o box do Avatar - orientação vertical */
+    .avatar-box {
+        height: 520px !important; /* Mesma altura dos outros boxes - aumentada */
+    }
+
+    .avatar-box .viewer-area {
+        width: 100%; /* Usa toda a largura disponível */
+        height: 100%;
+        aspect-ratio: auto; /* Remove aspect-ratio fixo */
+        padding: 0 !important; /* Remove padding para maximizar área útil */
+        border: none !important; /* Remove borda para mais espaço */
+    }
+
+    .avatar-box #scene-container {
+        width: 100%;
+        height: 100%;
+        min-height: 300px; /* Altura mínima ajustada */
+        border-radius: 8px; /* Mantém o border-radius */
+        overflow: hidden; /* Garante que o conteúdo 3D respeite o border-radius */
+    }
+
+    /* Garantir que os botões do avatar fiquem alinhados */
+    .avatar-box .box-buttons {
+        flex-shrink: 0; /* Impede que os botões sejam comprimidos */
+        margin-top: auto; /* Empurra os botões para o final do container */
+    }
+</style>
 @endsection
